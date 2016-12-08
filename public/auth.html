@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=utf-8 />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Christmas Gift Exchange</title>
+
+<link rel="stylesheet" type="text/css" href="main.css">
+
+<script src="https://www.gstatic.com/firebasejs/3.6.2/firebase.js"></script>
+<script>
+
+  var config = {
+    apiKey: "AIzaSyDUpruvca9bXNS54MDw7NqsvyjqyghDynY",
+    authDomain: "authexampleproject-aaac3.firebaseapp.com",
+    databaseURL: "https://authexampleproject-aaac3.firebaseio.com",
+    storageBucket: "authexampleproject-aaac3.appspot.com",
+    messagingSenderId: "170149751906"
+  };
+  firebase.initializeApp(config);
+</script>
+  <script type="text/javascript">
+
+    function toggleSignIn() {
+      if (!firebase.auth().currentUser) {
+        var provider = new firebase.auth.GithubAuthProvider();
+
+        provider.addScope('repo');
+
+        firebase.auth().signInWithRedirect(provider);
+
+      } else {
+
+        firebase.auth().signOut();
+
+      }
+
+      document.getElementById('quickstart-sign-in').disabled = true;
+
+    }
+
+     var nameList = [];
+
+    function initApp() {
+
+      firebase.auth().getRedirectResult().then(function(result) {
+        if (result.credential) {
+
+          var token = result.credential.accessToken;
+          document.getElementById('quickstart-oauthtoken').textContent = token;
+        } else {
+          document.getElementById('quickstart-oauthtoken').textContent = 'null';
+        }
+        var user = result.user;
+      }).catch(function(error) {
+        var errorMessage = error.message;
+        var email = error.email;
+        var credential = error.credential;
+        if (errorCode === 'auth/account-exists-with-different-credential') {
+          alert('You have already signed up with a different auth provider for that email.');
+        } else {
+          console.error(error);
+        }
+      });
+      firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+          var displayName = user.displayName;
+          var email = user.email;
+          var emailVerified = user.emailVerified;
+          var photoURL = user.photoURL;
+          var isAnonymous = user.isAnonymous;
+          var uid = user.uid;
+          var providerData = user.providerData;
+
+          document.getElementById('quickstart-sign-in').textContent = 'Sign out';
+          document.getElementById('quickstart-sign-in').disabled = false;
+          document.getElementById('welcome-user').textContent = "Welcome, " + displayName;
+          document.getElementById('sign-in-prompt').textContent = "";
+          document.getElementById('gift-exchange').style.visibility = "visible";
+
+        } else {
+          document.getElementById('quickstart-sign-in').textContent = 'Sign in with GitHub';
+          document.getElementById('welcome-user').textContent = "";
+          document.getElementById('quickstart-sign-in').disabled = false;
+          document.getElementById('gift-exchange').style.visibility = "hidden";
+          document.getElementById('name-list').textContent = "";
+        }
+        document.getElementById('quickstart-sign-in').disabled = false;
+      });
+      document.getElementById('quickstart-sign-in').addEventListener('click', toggleSignIn, false);
+    }
+
+    function createList(name) {
+      var innerShuffle = document.getElementById('shuffle').innerHTML;
+
+      if (innerShuffle != "") {
+        document.getElementById('shuffle').innerHTML = "";
+      }
+
+      document.getElementById('name').value = "";
+      nameList.push(name);
+      var names = nameList.toString();
+      document.getElementById('original').innerHTML = names.split(',').join("<br>");
+    }
+
+    function giftExchange() {
+      var tempArray = nameList.slice();
+      tempArray = shuffleArray(tempArray);
+      var same = checkDups(tempArray);
+
+      while (same) {
+        console.log(same);
+        tempArray = shuffleArray(tempArray);
+        same = checkDups(tempArray);
+      }
+
+      var original = tempArray.toString();
+      var shuffle = nameList.toString();
+      document.getElementById('original').innerHTML = original.split(',').join("<br>");
+      document.getElementById('shuffle').innerHTML = shuffle.split(',').join("<br>");
+    }
+
+    function checkDups(tempArray) {
+      var same = false;
+
+      for (var i = 0; i < nameList.length; i++) {
+        if (nameList[i] == tempArray[i]) {
+          same = true;
+        }
+      }
+
+      return same;
+    }
+
+    function clearExchange() {
+      console.log("clear")
+      nameList = [];
+      document.getElementById('original').innerHTML = "";
+      document.getElementById('shuffle').innerHTML = "";
+    }
+
+    function shuffleArray(array) {
+      for (var i = array.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var temp = array[i];
+          array[i] = array[j];
+          array[j] = temp;
+      }
+      return array;
+    }
+
+    window.onload = function() {
+      initApp();
+    };
+  </script>
+</head>
+<body>
+  <div id="navbar">
+    <div class="quickstart-user-details-container">
+      <span id="quickstart-sign-in-status"></span>
+      <span id="welcome-user"></span>
+      <button disabled class="mdl-button mdl-js-button mdl-button--raised" id="quickstart-sign-in">Sign in with GitHub</button>
+    </div>
+  </div>
+
+  <h1 id="title">Christmas Gift Exchange</h1>
+
+  <div id="gift-exchange">
+    <form onsubmit="return false">
+      Enter a name:
+      <input type="text" id="name" name="name">
+      <input type="submit" id="addName" value="Add Name"  onclick="createList(document.getElementById('name').value)">
+    </form>
+
+    <br>
+
+    <div id="exchange-list">
+      <table>
+        <tr>
+            <td id="shuffle"></td>
+            <td id="original"></td>
+        </tr>
+      </table>
+    </div>
+
+    <br>
+
+    <button id="assign-button" onclick="giftExchange()">New Exchange</button>
+    <button id="clear-button" onclick-"clearExchange()">Clear</button>
+
+  </div>
+</body>
+</html>
+
